@@ -14,8 +14,8 @@ from advisory_parser.exceptions import AdvisoryParserGetContentException
 # Enhanced CVE regex with validation and performance optimization
 CVE_REGEX = re.compile(r"CVE-(?:19[789]\d|20[0-9]\d)-\d{4,}", re.IGNORECASE)
 
-# Common false positive patterns to filter out
-CVE_FALSE_POSITIVES = re.compile(r"CVE-(?:0000|9999)-\d+|CVE-\d{4}-(?:0000|9999)", re.IGNORECASE)
+# Common false positive patterns to filter out (only test/placeholder CVEs)
+CVE_FALSE_POSITIVES = re.compile(r"CVE-(?:0000|9999)-(?:0000|9999)|CVE-\d{4}-0000", re.IGNORECASE)
 
 
 def get_request(url, max_retries=3, timeout=30):
@@ -49,7 +49,8 @@ def get_request(url, max_retries=3, timeout=30):
             time.sleep(2 ** attempt)
         except (URLError, OSError) as e:
             if attempt == max_retries:
-                error_msg = "Failed to establish connection: {} after {} retries".format(e.reason, max_retries)
+                reason = getattr(e, 'reason', str(e))
+                error_msg = "Failed to establish connection: {} after {} retries".format(reason, max_retries)
                 raise AdvisoryParserGetContentException(error_msg)
             # Exponential backoff for connection issues
             time.sleep(2 ** attempt)

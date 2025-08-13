@@ -54,15 +54,25 @@ class Parser:
         :return: Normalized URL string
         :raises AdvisoryParserUrlException: If URL is invalid
         """
+        if not url or not url.strip():
+            raise AdvisoryParserUrlException("Empty URL provided")
+            
         url = url.strip()
+        
+        # Check for basic URL structure
+        if url in ['http://', 'https://'] or '://' in url and not url.startswith(('http://', 'https://')):
+            raise AdvisoryParserUrlException("Invalid URL format: {}".format(url))
         
         # Add protocol if missing
         if not url.startswith(('http://', 'https://')):
+            # Only add https if it looks like a domain
+            if '.' not in url or url.startswith('.') or url.endswith('.'):
+                raise AdvisoryParserUrlException("Invalid URL format: {}".format(url))
             url = 'https://' + url
         
         try:
             parsed = urlparse(url)
-            if not parsed.netloc:
+            if not parsed.netloc or parsed.netloc in ['', '.']:
                 raise AdvisoryParserUrlException("Invalid URL format: {}".format(url))
         except Exception:
             raise AdvisoryParserUrlException("Malformed URL: {}".format(url))
